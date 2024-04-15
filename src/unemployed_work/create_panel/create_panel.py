@@ -25,7 +25,7 @@ def merge_panel_with_single_family_file(panel, family_file, variable_dictionary_
     pass
 
 
-def add_variable_from_family_file_to_panel(panel, family_file, year,variable_name, head_variables, spouse_variables,family_interview_number_mapping_df):
+def add_variables_from_family_file_to_panel(panel, family_file, year,variable_name, head_variables, spouse_variables,family_interview_number_mapping_df):
     """This function takes the panel from the prepare_individual_file_for_panel function and adds a variable from the family file to it.
 
     Parameters
@@ -53,20 +53,9 @@ def add_variable_from_family_file_to_panel(panel, family_file, year,variable_nam
 
     spouse_PSID_variable_name = spouse_variables[variable_name][year]
 
-    family_interview_number = family_interview_number_mapping_df.loc[family_interview_number_mapping_df["Year"] == year, "Family_File"].values[0]
+    family_interview_number_variable_family_file = family_interview_number_mapping_df.loc[family_interview_number_mapping_df["Year"] == year, "Family_File"].values[0]
 
-    panel_merged = pd.merge(panel, family_file[[head_PSID_variable_name, spouse_PSID_variable_name]], left_on="Family_Interview_Number", right_on=family_interview_number, how="left", validate="m:1")
-
-    conditions = [
-    (panel_merged["Relation_To_Head_String"] == "Head"),
-    (panel_merged["Relation_To_Head_String"] == "Spouse")
-    ]
-    choices = [
-        panel_merged[head_PSID_variable_name],
-        panel_merged[spouse_PSID_variable_name]
-    ]
-
-    panel_merged.loc[panel_merged["Year"]== year, variable_name] = np.select(conditions, choices, default=np.nan)
+    panel_merged = pd.merge(panel, family_file[[family_interview_number_variable_family_file, head_PSID_variable_name, spouse_PSID_variable_name]], left_on="Family_Interview_Number", right_on=family_interview_number_variable_family_file, how="left", validate="m:1")
 
     return panel_merged
 

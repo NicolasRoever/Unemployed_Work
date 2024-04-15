@@ -14,7 +14,8 @@ def test_add_variable_from_family_file_to_panel():
     'Family_Interview_Number': [1597, 1597, 1331, 1331],
        "Year": [1969, 1969, 1970, 1970],
     "Relation_To_Head_Variable_Name": ['ER30022','ER30022', 'ER30045', 'ER30045'], 
-        "Relation_To_Head_Value": [1, 2, 1,2]
+        "Relation_To_Head_Value": [1, 2, 1,2],
+         "Relation_To_Head_String": ['Head', 'Spouse', 'Head', 'Spouse']
 
     })
 
@@ -33,7 +34,7 @@ def test_add_variable_from_family_file_to_panel():
     }
 
     spouse_variables ={ "Labor_Income_Previous_Year":{ 1969: 'V75',
-    1969: 'V516'}}
+    1970: 'V516'}}
 
     family_interview_number_mapping_df = pd.DataFrame({
     'Year': [1969, 1970],
@@ -50,6 +51,7 @@ def test_add_variable_from_family_file_to_panel():
         "Labor_Income_Previous_Year": [2000, 1000, 2000, 1000]
     })
 
+    breakpoint()
     actual_result = add_variable_from_family_file_to_panel(test_data_panel, test_data_family, 1969,"Labor_Income_Previous_Year", head_variables, spouse_variables, family_interview_number_mapping_df)
 
     pd.testing.assert_frame_equal(actual_result, expected_result, check_dtype=False)
