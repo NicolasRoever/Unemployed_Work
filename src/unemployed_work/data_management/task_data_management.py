@@ -6,21 +6,16 @@ import pandas as pd
 
 from unemployed_work.config import BLD, SRC
 from unemployed_work.data_management import clean_data
-from unemployed_work.utilities import read_yaml
 
-clean_data_deps = {
-    "scripts": Path("clean_data.py"),
-    "data_info": SRC / "data_management" / "data_info.yaml",
-    "data": SRC / "data" / "data.csv",
-}
 
 
 def task_clean_data_python(
-    depends_on=clean_data_deps,
-    produces=BLD / "python" / "data" / "data_clean.csv",
+    depends_on= SRC / 'data' / 'PSIDSHELF_1968_2019_LONG.dta',
+    produces=BLD / "python" / "data" / "psid_clean.pkl",
 ):
     """Clean the data (Python version)."""
-    data_info = read_yaml(depends_on["data_info"])
-    data = pd.read_csv(depends_on["data"])
-    data = clean_data(data, data_info)
-    data.to_csv(produces, index=False)
+    raw_data = pd.read_stata(depends_on)
+
+    cleaned_data = clean_data(raw_data)
+
+    cleaned_data.to_pickle(produces)

@@ -12,6 +12,8 @@
 # bld
 bld/
 
+src/unemployed_work/data/
+
 # latex
 *.aux
 *.bbl
