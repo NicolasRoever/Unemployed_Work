@@ -1,50 +1,73 @@
 import numpy as np
 import pandas as pd
 import pytest
-from unemployed_work.config import TEST_DIR
-from unemployed_work.data_management import clean_data
-from unemployed_work.utilities import read_yaml
+from src.unemployed_work.config import TEST_DIR
+from src.unemployed_work.data_management.clean_data import create_dataset_for_occupation_unemployment_regression, calculate_employment_length
 
 
-@pytest.fixture()
-def data():
-    return pd.read_csv(TEST_DIR / "data_management" / "data_fixture.csv")
+def test_create_dataset_for_occupation_unemployment_regression():
+
+    test_input = pd.DataFrame({
+        'PNum': [1, 1, 1, 2, 2, 2],
+        'Year': [1970, 1971, 1972, 1970, 1971, 1972], 
+        'Unemployment_Indicator': [0, 1, 0, 1, 0, 1],
+        'Occupation_Category': ['0', 'A', '0', 'B', 'B', '0']
+    })
 
 
-@pytest.fixture()
-def data_info():
-    return read_yaml(TEST_DIR / "data_management" / "data_info_fixture.yaml")
+
+    expected_output = pd.DataFrame({
+        'PNum':[1,2], 
+        'Next_Year_Occupation_Category':['0', 'B' ],
+        'Employment_Length':[np.NaN,1 ]
+    })
+
+    actual_output = create_dataset_for_occupation_unemployment_regression(test_input)[['PNum', 'Next_Year_Occupation_Category', 'Employment_Length']].reset_index(drop=True)
+
+    pd.testing.assert_frame_equal(actual_output, expected_output.reset_index(drop=True), 
+                                  check_dtype=False, check_like=True, check_index_type=False, check_column_type=False, check_frame_type=False, check_datetimelike_compat=False)
+    
+
+    
+
+def test_calculate_employment_length():
+    # Create a sample DataFrame
+    test_input = pd.DataFrame({
+        'Change_Unemployment_to_Employment': [1, 0, 0, 0, 1, 0],
+        'Unemployment_Indicator': [0, 1, 0, 1, 1, 0],
+        'Next_Year_Unemployment_Indicator': [1, 0, 1, 0, 0, np.NaN]
+    })
+
+    expected_output = [1,np.NaN]
+
+    # Call the function with the sample DataFrame
+    actual_output = calculate_employment_length(test_input)
+
+    # Check the result
+    assert expected_output == actual_output
 
 
-def test_clean_data_drop_columns(data, data_info):
-    data_clean = clean_data(data, data_info)
-    assert not set(data_info["columns_to_drop"]).intersection(set(data_clean.columns))
+
+def test_create_dataset_for_occupation_unemployment_regression_person_with_multiple_lenghts():
+
+    test_input = pd.DataFrame({
+        'PNum': [1, 1, 1, 1, 1, 1],
+        'Year': [1970, 1971, 1972, 1973, 1974, 1975], 
+        'Unemployment_Indicator': [0, 1, 0, 1, 0, 1],
+        'Occupation_Category': ['A', '0', 'C', '0', 'D', '0']
+    })
 
 
-def test_clean_data_dropna(data, data_info):
-    data_clean = clean_data(data, data_info)
-    assert not data_clean.isna().any(axis=None)
+
+    expected_output = pd.DataFrame({
+        'PNum':[1,1], 
+        'Next_Year_Occupuation_Category':['C', 'D' ],
+        'Employment_Length':[1,1]
+    })
+
+    actual_output = create_dataset_for_occupation_unemployment_regression(test_input)[['PNum', 'Next_Year_Occupation_Category', 'Employment_Length']]
 
 
-def test_clean_data_categorical_columns(data, data_info):
-    data_clean = clean_data(data, data_info)
-    for cat_col in data_info["categorical_columns"]:
-        renamed_col = data_info["column_rename_mapping"].get(cat_col, cat_col)
-        assert data_clean[renamed_col].dtype == "category"
 
-
-def test_clean_data_column_rename(data, data_info):
-    data_clean = clean_data(data, data_info)
-    old_names = set(data_info["column_rename_mapping"].keys())
-    new_names = set(data_info["column_rename_mapping"].values())
-    assert not old_names.intersection(set(data_clean.columns))
-    assert new_names.intersection(set(data_clean.columns)) == new_names
-
-
-def test_convert_outcome_to_numerical(data, data_info):
-    data_clean = clean_data(data, data_info)
-    outcome_name = data_info["outcome"]
-    outcome_numerical_name = data_info["outcome_numerical"]
-    assert outcome_numerical_name in data_clean.columns
-    assert data_clean[outcome_name].dtype == "category"
-    assert data_clean[outcome_numerical_name].dtype == np.int8
+    pd.testing.assert_frame_equal(actual_output, expected_output, 
+                                  check_dtype=False, check_like=True, check_index_type=False, check_column_type=False, check_frame_type=False, check_datetimelike_compat=False)
